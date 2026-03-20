@@ -8,7 +8,7 @@ router.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-router.get("/myip", async (_req, res) => {
+router.get("/myip", async (_req: Request, res: Response) => {
   const { data } = await axios.get("https://api.ipify.org?format=json");
   res.json(data);
 });
