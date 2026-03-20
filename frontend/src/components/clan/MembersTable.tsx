@@ -1,31 +1,48 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import type { MemberStats, MemberRole } from '@/types';
-import { Card, ScoreBar, EmptyState } from '@/components/ui';
-import { RoleBadge, StatusBadge, WarBadge } from './Badges';
-import { MemberModal } from './MemberModal';
-import { cn, formatNumber } from '@/lib/utils';
+import { useState, useMemo } from "react";
+import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import type { MemberStats, MemberRole } from "@/types";
+import { Card, ScoreBar, EmptyState } from "@/components/ui";
+import { RoleBadge, StatusBadge, WarBadge } from "./Badges";
+import { MemberModal } from "./MemberModal";
+import { cn, formatNumber } from "@/lib/utils";
 
-type SortKey = 'name' | 'role' | 'donations' | 'collaborationScore' | 'war.fame' | 'trophies';
-type FilterKey = 'all' | 'war' | 'noWar' | 'top' | 'low' | MemberRole;
+type SortKey =
+  | "name"
+  | "role"
+  | "donations"
+  | "collaborationScore"
+  | "war.fame"
+  | "trophies";
+type FilterKey = "all" | "war" | "noWar" | "top" | "low" | MemberRole;
 
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'all', label: 'Todos' },
-  { key: 'war', label: '⚔️ Na guerra' },
-  { key: 'noWar', label: '💤 Ausentes' },
-  { key: 'top', label: '🏆 Top' },
-  { key: 'low', label: '⚠️ Baixo' },
-  { key: 'leader', label: 'Líderes' },
-  { key: 'elder', label: 'Anciões' },
+  { key: "all", label: "Todos" },
+  { key: "war", label: "⚔️ Na guerra" },
+  { key: "noWar", label: "💤 Ausentes" },
+  { key: "top", label: "🏆 Top" },
+  { key: "low", label: "⚠️ Baixo" },
+  { key: "leader", label: "Líderes" },
+  { key: "elder", label: "Anciões" },
 ];
 
-function SortIcon({ col, active, dir }: { col: string; active: string; dir: 'asc' | 'desc' }) {
-  if (col !== active) return <ChevronsUpDown className="w-3 h-3 text-slate-600" />;
-  return dir === 'asc'
-    ? <ChevronUp className="w-3 h-3 text-primary" />
-    : <ChevronDown className="w-3 h-3 text-primary" />;
+function SortIcon({
+  col,
+  active,
+  dir,
+}: {
+  col: string;
+  active: string;
+  dir: "asc" | "desc";
+}) {
+  if (col !== active)
+    return <ChevronsUpDown className="w-3 h-3 text-slate-600" />;
+  return dir === "asc" ? (
+    <ChevronUp className="w-3 h-3 text-primary" />
+  ) : (
+    <ChevronDown className="w-3 h-3 text-primary" />
+  );
 }
 
 interface Props {
@@ -33,18 +50,18 @@ interface Props {
 }
 
 export function MembersTable({ members }: Props) {
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<FilterKey>('all');
-  const [sortKey, setSortKey] = useState<SortKey>('collaborationScore');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("collaborationScore");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<MemberStats | null>(null);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDir('desc');
+      setSortDir("desc");
     }
   }
 
@@ -57,29 +74,78 @@ export function MembersTable({ members }: Props) {
     }
 
     switch (filter) {
-      case 'war': list = list.filter((m) => m.war.participated); break;
-      case 'noWar': list = list.filter((m) => !m.war.participated); break;
-      case 'top': list = list.filter((m) => m.activityStatus === 'champion' || m.activityStatus === 'active'); break;
-      case 'low': list = list.filter((m) => m.activityStatus === 'low' || m.activityStatus === 'inactive'); break;
-      case 'leader': list = list.filter((m) => m.role === 'leader' || m.role === 'coLeader'); break;
-      case 'elder': list = list.filter((m) => m.role === 'elder'); break;
+      case "war":
+        list = list.filter((m) => m.war.participated);
+        break;
+      case "noWar":
+        list = list.filter((m) => !m.war.participated);
+        break;
+      case "top":
+        list = list.filter(
+          (m) =>
+            m.activityStatus === "champion" || m.activityStatus === "active",
+        );
+        break;
+      case "low":
+        list = list.filter(
+          (m) => m.activityStatus === "low" || m.activityStatus === "inactive",
+        );
+        break;
+      case "leader":
+        list = list.filter((m) => m.role === "leader" || m.role === "coLeader");
+        break;
+      case "elder":
+        list = list.filter((m) => m.role === "elder");
+        break;
     }
 
     list.sort((a, b) => {
-      const aVal = sortKey === 'war.fame' ? a.war.fame : (a as Record<string, unknown>)[sortKey] as number | string;
-      const bVal = sortKey === 'war.fame' ? b.war.fame : (b as Record<string, unknown>)[sortKey] as number | string;
-      const cmp = typeof aVal === 'string' ? aVal.localeCompare(bVal as string) : (aVal as number) - (bVal as number);
-      return sortDir === 'asc' ? cmp : -cmp;
+      let aVal: number | string;
+      let bVal: number | string;
+
+      if (sortKey === "war.fame") {
+        aVal = a.war.fame;
+        bVal = b.war.fame;
+      } else if (sortKey === "name") {
+        aVal = a.name;
+        bVal = b.name;
+      } else if (sortKey === "role") {
+        aVal = a.role;
+        bVal = b.role;
+      } else if (sortKey === "donations") {
+        aVal = a.donations;
+        bVal = b.donations;
+      } else if (sortKey === "collaborationScore") {
+        aVal = a.collaborationScore;
+        bVal = b.collaborationScore;
+      } else {
+        aVal = a.trophies;
+        bVal = b.trophies;
+      }
+
+      const cmp =
+        typeof aVal === "string"
+          ? aVal.localeCompare(bVal as string)
+          : (aVal as number) - (bVal as number);
+      return sortDir === "asc" ? cmp : -cmp;
     });
 
     return list;
   }, [members, search, filter, sortKey, sortDir]);
 
-  const Th = ({ label, sortable, col }: { label: string; sortable?: SortKey; col?: string }) => (
+  const Th = ({
+    label,
+    sortable,
+    col,
+  }: {
+    label: string;
+    sortable?: SortKey;
+    col?: string;
+  }) => (
     <th
       className={cn(
-        'px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap',
-        sortable && 'cursor-pointer hover:text-slate-300 select-none'
+        "px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap",
+        sortable && "cursor-pointer hover:text-slate-300 select-none",
       )}
       onClick={() => sortable && toggleSort(sortable)}
     >
@@ -92,7 +158,9 @@ export function MembersTable({ members }: Props) {
 
   return (
     <>
-      {selected && <MemberModal member={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <MemberModal member={selected} onClose={() => setSelected(null)} />
+      )}
 
       <Card>
         {/* Controls */}
@@ -112,10 +180,10 @@ export function MembersTable({ members }: Props) {
                 key={key}
                 onClick={() => setFilter(key)}
                 className={cn(
-                  'px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border',
+                  "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border",
                   filter === key
-                    ? 'bg-primary/10 text-primary border-primary/30'
-                    : 'bg-transparent text-slate-500 border-border hover:border-border-light hover:text-slate-300'
+                    ? "bg-primary/10 text-primary border-primary/30"
+                    : "bg-transparent text-slate-500 border-border hover:border-border-light hover:text-slate-300",
                 )}
               >
                 {label}
@@ -149,22 +217,34 @@ export function MembersTable({ members }: Props) {
                     key={m.tag}
                     onClick={() => setSelected(m)}
                     className={cn(
-                      'border-b border-border/60 cursor-pointer transition-colors duration-100',
-                      'hover:bg-surface-2/60',
-                      m.isHighlight && 'bg-champion/3'
+                      "border-b border-border/60 cursor-pointer transition-colors duration-100",
+                      "hover:bg-surface-2/60",
+                      m.isHighlight && "bg-champion/3",
                     )}
                   >
-                    <td className="px-4 py-3 text-slate-500 text-sm w-10">{i + 1}</td>
+                    <td className="px-4 py-3 text-slate-500 text-sm w-10">
+                      {i + 1}
+                    </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-sm text-white">{m.name}</div>
-                      <div className="text-xs text-slate-600 font-mono">{m.tag}</div>
+                      <div className="font-semibold text-sm text-white">
+                        {m.name}
+                      </div>
+                      <div className="text-xs text-slate-600 font-mono">
+                        {m.tag}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <RoleBadge role={m.role} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-300">{formatNumber(m.trophies)}</td>
-                    <td className="px-4 py-3 text-sm text-slate-300">{m.donations}</td>
-                    <td className="px-4 py-3 text-sm text-slate-300">{formatNumber(m.war.fame)}</td>
+                    <td className="px-4 py-3 text-sm text-slate-300">
+                      {formatNumber(m.trophies)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-300">
+                      {m.donations}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-300">
+                      {formatNumber(m.war.fame)}
+                    </td>
                     <td className="px-4 py-3 w-36">
                       <ScoreBar score={m.collaborationScore} />
                     </td>
@@ -182,7 +262,9 @@ export function MembersTable({ members }: Props) {
         </div>
 
         <div className="px-4 py-3 border-t border-border">
-          <p className="text-xs text-slate-600">{filtered.length} membro(s) exibido(s)</p>
+          <p className="text-xs text-slate-600">
+            {filtered.length} membro(s) exibido(s)
+          </p>
         </div>
       </Card>
     </>
