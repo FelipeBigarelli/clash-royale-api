@@ -96,8 +96,6 @@ clash-dashboard/
 
 ## 🔑 Obtendo o API Token do Clash Royale
 
-177.92.53.157
-
 1. Acesse [developer.clashroyale.com](https://developer.clashroyale.com)
 2. Crie uma conta ou faça login
 3. Vá em **My Account → Create New Key**
